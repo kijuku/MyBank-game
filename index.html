@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <meta name="description" content="MyBank – pankinjohtajan peli. Opetuspeli taloudesta 12-vuotiaista alkaen.">
-  <title>MyBank 0.9.0-beta</title>
+  <title>MyBank 0.10.0-beta</title>
   <style>
     html, body { margin: 0; height: 100%; background: #0b1020; overflow: hidden; }
-    #unity-canvas { width: 100vw; height: 100vh; display: block; background: #0b1020; outline: none; }
+    /* dvh: puhelimen osoiterivi ei peitä peliä */
+    #unity-canvas { width: 100vw; height: 100vh; height: 100dvh; display: block; background: #0b1020; outline: none; touch-action: none; }
     #loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
                color: #d1dbf5; font-family: "Segoe UI", Arial, sans-serif; text-align: center; padding: 0 16px; }
     #loading h1 { color: #ffd640; font-size: 64px; margin: 0 0 8px; }
@@ -21,9 +22,9 @@
   <canvas id="unity-canvas" tabindex="-1"></canvas>
   <div id="loading">
     <h1>MyBank</h1>
-    <div>Pankinjohtajan peli · 0.9.0-beta</div>
+    <div>Pankinjohtajan peli · 0.10.0-beta</div>
     <div id="bar"><div id="fill"></div></div>
-    <div id="note">Ladataan peliä (noin 15–25 Mt). Peli toimii parhaiten tietokoneella Chromessa, Edgessä tai Firefoxissa.
+    <div id="note">Ladataan peliä (noin 15–25 Mt). Toimii tietokoneella, Chromebookilla ja puhelimessa (Chrome, Edge, Firefox, Safari).
       Tallennukset säilyvät tässä selaimessa.</div>
     <div id="error"></div>
   </div>
@@ -37,7 +38,9 @@
       streamingAssetsUrl: "StreamingAssets",
       companyName: "DefaultCompany",
       productName: "MyBank",
-      productVersion: "0.9.0-beta",
+      productVersion: "0.10.0-beta",
+      // Puhelimissa tarkkuus rajataan 2×:aan: kevyempi piirtää, teksti silti terävää.
+      devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
     };
     createUnityInstance(canvas, config, function (progress) {
       document.querySelector("#fill").style.width = (100 * progress) + "%";
