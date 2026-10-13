@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="description" content="MyBank – pankinjohtajan peli. Opetuspeli taloudesta 12-vuotiaista alkaen.">
+  <title>MyBank 0.9.0-beta</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b1020; overflow: hidden; }
+    #unity-canvas { width: 100vw; height: 100vh; display: block; background: #0b1020; outline: none; }
+    #loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+               color: #d1dbf5; font-family: "Segoe UI", Arial, sans-serif; text-align: center; padding: 0 16px; }
+    #loading h1 { color: #ffd640; font-size: 64px; margin: 0 0 8px; }
+    #bar { width: min(420px, 80vw); height: 12px; background: #1f2845; border-radius: 6px; margin: 24px 0 12px; overflow: hidden; }
+    #fill { height: 100%; width: 0; background: #5cf2e0; transition: width .2s; }
+    #note { font-size: 14px; opacity: .7; max-width: 520px; }
+    #error { display: none; color: #ff737a; margin-top: 16px; max-width: 520px; }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" tabindex="-1"></canvas>
+  <div id="loading">
+    <h1>MyBank</h1>
+    <div>Pankinjohtajan peli · 0.9.0-beta</div>
+    <div id="bar"><div id="fill"></div></div>
+    <div id="note">Ladataan peliä (noin 15–25 Mt). Peli toimii parhaiten tietokoneella Chromessa, Edgessä tai Firefoxissa.
+      Tallennukset säilyvät tässä selaimessa.</div>
+    <div id="error"></div>
+  </div>
+  <script src="Build/WebGL.loader.js"></script>
+  <script>
+    var canvas = document.querySelector("#unity-canvas");
+    var config = {
+      dataUrl: "Build/WebGL.data.unityweb",
+      frameworkUrl: "Build/WebGL.framework.js.unityweb",
+      codeUrl: "Build/WebGL.wasm.unityweb",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "DefaultCompany",
+      productName: "MyBank",
+      productVersion: "0.9.0-beta",
+    };
+    createUnityInstance(canvas, config, function (progress) {
+      document.querySelector("#fill").style.width = (100 * progress) + "%";
+    }).then(function () {
+      document.querySelector("#loading").remove();
+      canvas.focus();
+    }).catch(function (message) {
+      var error = document.querySelector("#error");
+      error.style.display = "block";
+      error.textContent = "Pelin käynnistys epäonnistui: " + message;
+    });
+  </script>
+</body>
+</html>
