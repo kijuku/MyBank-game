@@ -2,9 +2,18 @@
 <html lang="fi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="MyBank – pankinjohtajan peli. Opetuspeli taloudesta 12-vuotiaista alkaen.">
-  <title>MyBank 0.12.0-beta</title>
+  <title>MyBank 0.12.1-beta</title>
+  <!-- PWA: peli asennetaan puhelimeen ja tietokoneelle sovelluksena (aloitusnäytön kuvake, koko näyttö). -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b1020">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MyBank">
   <style>
     html, body { margin: 0; height: 100%; background: #0b1020; overflow: hidden; }
     /* dvh: puhelimen osoiterivi ei peitä peliä */
@@ -16,20 +25,62 @@
     #fill { height: 100%; width: 0; background: #5cf2e0; transition: width .2s; }
     #note { font-size: 14px; opacity: .7; max-width: 520px; }
     #error { display: none; color: #ff737a; margin-top: 16px; max-width: 520px; }
+    #install-hint { display: none; font-size: 14px; color: #5cf2e0; margin-top: 14px; max-width: 520px; }
+    #install { display: none; position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+               z-index: 10; gap: 8px; align-items: center; font-family: "Segoe UI", Arial, sans-serif; }
+    #install button { border: 0; border-radius: 22px; padding: 10px 18px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    #install-yes { background: #ffd640; color: #0b1020; }
+    #install-no { background: #1f2845; color: #d1dbf5; }
   </style>
 </head>
 <body>
   <canvas id="unity-canvas" tabindex="-1"></canvas>
   <div id="loading">
     <h1>MyBank</h1>
-    <div>Pankinjohtajan peli · 0.12.0-beta</div>
+    <div>Pankinjohtajan peli · 0.12.1-beta</div>
     <div id="bar"><div id="fill"></div></div>
     <div id="note">Ladataan peliä (noin 15–25 Mt). Toimii tietokoneella, Chromebookilla ja puhelimessa (Chrome, Edge, Firefox, Safari).
       Tallennukset säilyvät tässä selaimessa.</div>
+    <div id="install-hint">Vinkki: lisää MyBank aloitusnäytölle, niin se aukeaa kuin sovellus.
+      Safari: Jaa-painike → Lisää Koti-valikkoon.</div>
     <div id="error"></div>
   </div>
+  <div id="install"><button id="install-yes">Asenna MyBank sovellukseksi</button><button id="install-no">Ei nyt</button></div>
   <script src="Build/WebGL.loader.js"></script>
   <script>
+    var version = "0.12.1-beta";
+
+    // Sovellustila: service worker (asennettavuus ja toiminta ilman verkkoa).
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("sw.js?v=" + encodeURIComponent(version)).catch(function () {});
+      });
+    }
+
+    // Asennuskehote (Chrome, Edge, Android). iPhonessa asennus tehdään Safarin Jaa-valikosta.
+    var standalone = window.matchMedia("(display-mode: standalone)").matches || window.matchMedia("(display-mode: fullscreen)").matches
+                     || window.navigator.standalone === true;
+    var installPrompt = null;
+    var install = document.querySelector("#install");
+    window.addEventListener("beforeinstallprompt", function (event) {
+      event.preventDefault();
+      installPrompt = event;
+      if (!standalone && localStorage.getItem("mybank-install-dismissed") !== "1") {
+        install.style.display = "flex";
+        setTimeout(function () { install.style.display = "none"; }, 20000);
+      }
+    });
+    document.querySelector("#install-yes").addEventListener("click", function () {
+      install.style.display = "none";
+      if (installPrompt) installPrompt.prompt();
+      installPrompt = null;
+    });
+    document.querySelector("#install-no").addEventListener("click", function () {
+      install.style.display = "none";
+      try { localStorage.setItem("mybank-install-dismissed", "1"); } catch (e) {}
+    });
+    if (!standalone && /iPhone|iPad|iPod/.test(navigator.userAgent)) document.querySelector("#install-hint").style.display = "block";
+
     var canvas = document.querySelector("#unity-canvas");
     var config = {
       dataUrl: "Build/WebGL.data.unityweb",
@@ -38,7 +89,7 @@
       streamingAssetsUrl: "StreamingAssets",
       companyName: "DefaultCompany",
       productName: "MyBank",
-      productVersion: "0.12.0-beta",
+      productVersion: version,
       // Puhelimissa tarkkuus rajataan 2×:aan: kevyempi piirtää, teksti silti terävää.
       devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
     };
